@@ -159,6 +159,7 @@
     <ClInclude Include="InputController.h" />
     <ClInclude Include="MeshLoader.h" />
     <ClInclude Include="ShaderLoader.h" />
+    <ClInclude Include="SurfaceMorpher.h" />
     <ClInclude Include="TextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +167,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MeshLoader.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
+    <ClCompile Include="SurfaceMorpher.cpp" />
     <ClCompile Include="TextureLoader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

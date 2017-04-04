@@ -13,6 +13,7 @@ static int currentSave = 0;
 
 void MeshLoader::LoadObj(string filename)
 {
+	clearAll();
 	ifstream file(filename);
 	if (file.is_open())
 	{
@@ -87,6 +88,7 @@ void MeshLoader::LoadObj(string filename)
 
 void MeshLoader::LoadObj2D(string filename)
 {
+	clearAll();
 	ifstream file(filename);
 	if (file.is_open())
 	{
@@ -219,4 +221,19 @@ vector<string> MeshLoader::split(string& s, const char* delim)
 	}
 
 	return ret;
+}
+
+void MeshLoader::clearAll()
+{
+	vertexIndices.clear();
+	uvIndices.clear();
+	normalIndices.clear();
+	rawVertices.clear();
+	rawUVs.clear();
+	rawNormals.clear();
+	outVertices.clear();
+	outUVs.clear();
+	outNormals.clear();
+	currentVertices.clear();
+	currentSave = 0;
 }

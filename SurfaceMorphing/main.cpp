@@ -3,14 +3,16 @@
 #include "ShaderLoader.h"
 #include "TextureLoader.h"
 #include "InputController.h"
+#include "SurfaceMorpher.h"
 
 int main()
 {
 	// Input Filename
-	cout << "Welcome to Surface Morphing. Please input the obj file name ('.obj' not needed):" << endl;
-	string filename;
-	cin >> filename;
-	filename.append(".obj");
+	cout << "Welcome to Surface Morphing. Please input the name of two obj files seperated with space('.obj' not needed):" << endl;
+	string filename1, filename2;
+	cin >> filename1 >> filename2;
+	filename1.append(".obj");
+	filename2.append(".obj");
 
 	// Init GLFW
 	glfwInit();
@@ -26,8 +28,10 @@ int main()
 	glPointSize(8.0f);
 
 	// Load Mesh
-	MeshLoader::LoadObj2D(filename);
-	//auto vertices = MeshLoader::GetSequencedVertices()[0];
+	MeshLoader::LoadObj2D(filename1);
+	auto vertices1 = MeshLoader::GetSequencedVertices()[0];
+	MeshLoader::LoadObj2D(filename2);
+	auto vertices2 = MeshLoader::GetSequencedVertices()[0];
 	//auto uvs = meshLoader->GetUVs();
 
 	// Load Shader
@@ -62,7 +66,7 @@ int main()
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 		// Draw the mesh
-		auto vertices = MeshLoader::GetSequencedVertices()[0];
+		auto vertices = SurfaceMorpher::GetLinearInterpolation(vertices1, vertices2);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);

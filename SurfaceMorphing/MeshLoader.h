@@ -16,4 +16,5 @@ public:
 	static vector<int>* GetVertexIndices();
 private:
 	static vector<string> split(string& s, const char* delim);
+	static void clearAll();
 };
