@@ -25,6 +25,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		position = vec3(0, 0, 1);
 		horizontalAngle = 3.14f;
 		verticalAngle = 0;
+		SurfaceMorpher::Reset();
 	}
 	// Draw Line
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
