@@ -1,8 +1,9 @@
 #include "SurfaceMorpher.h"
 
 static clock_t startTime = 0;
+static float duration = 2.0f;
 
-vector<vec3> SurfaceMorpher::GetLinearInterpolation(vector<vec3> vertices1, vector<vec3> vertices2, float duration)
+vector<vec3> SurfaceMorpher::GetLinearInterpolation(vector<vec3> vertices1, vector<vec3> vertices2)
 {
 	if (startTime == 0)
 		startTime = clock();
@@ -22,7 +23,7 @@ vector<vec3> SurfaceMorpher::GetLinearInterpolation(vector<vec3> vertices1, vect
 	return intermediateVertices;
 }
 
-vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(vector<vec3> vertices1, vector<vec3> vertices2, float duration)
+vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(vector<vec3> vertices1, vector<vec3> vertices2)
 {
 	if (startTime == 0)
 		startTime = clock();
@@ -45,4 +46,23 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(vector<vec3> vertice
 void SurfaceMorpher::Reset()
 {
 	startTime = 0;
+}
+
+void SurfaceMorpher::SpeedUp()
+{
+	duration -= 0.5f;
+	duration = max(0.5f, duration);
+	Reset();
+}
+
+void SurfaceMorpher::SpeedDown()
+{
+	duration += 0.5f;
+	Reset();
+}
+
+void SurfaceMorpher::SpeedReset()
+{
+	duration = 2.0f;
+	Reset();
 }

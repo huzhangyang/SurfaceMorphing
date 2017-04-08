@@ -27,6 +27,15 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		verticalAngle = 0;
 		SurfaceMorpher::Reset();
 	}
+	if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+		SurfaceMorpher::SpeedDown();
+	}
+	if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+		SurfaceMorpher::SpeedUp();
+	}
+	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+		SurfaceMorpher::SpeedReset();
+	}
 	// Draw Line
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
