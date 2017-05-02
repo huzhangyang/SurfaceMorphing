@@ -1,12 +1,16 @@
 #pragma once
 
-#include "global.h"
 #include <ctime>
+#include "Eigen/Dense"
+#include "global.h"
+#include "MeshLoader.h"
+
+using namespace Eigen;
 
 class SurfaceMorpher {
 public:
-	static vector<vec3> GetLinearInterpolation(vector<vec3> vertices1, vector<vec3> vertices2);
-	static vector<vec3> GetTransformBasedInterpolation(vector<vec3> vertices1, vector<vec3> vertices2);
+	static vector<vec3> GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2);
+	static vector<vec3> GetTransformBasedInterpolation(Mesh* mesh1, Mesh* mesh2);
 	static void Reset();
 	static void SpeedUp();
 	static void SpeedDown();

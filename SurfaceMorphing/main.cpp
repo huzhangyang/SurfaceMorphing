@@ -28,11 +28,8 @@ int main()
 	glPointSize(8.0f);
 
 	// Load Mesh
-	MeshLoader::LoadObj2D(filename1);
-	auto vertices1 = MeshLoader::GetSequencedVertices()[0];
-	MeshLoader::LoadObj2D(filename2);
-	auto vertices2 = MeshLoader::GetSequencedVertices()[0];
-	//auto uvs = meshLoader->GetUVs();
+	Mesh* mesh1 = MeshLoader::LoadObj2D(filename1);
+	Mesh* mesh2 = MeshLoader::LoadObj2D(filename2);
 
 	// Load Shader
 	GLuint programID = ShaderLoader::LoadShader("vertex.shader", "fragment.shader");
@@ -66,7 +63,7 @@ int main()
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 		// Draw the mesh
-		auto vertices = SurfaceMorpher::GetLinearInterpolation(vertices1, vertices2);
+		auto vertices = SurfaceMorpher::GetLinearInterpolation(mesh1, mesh2);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
