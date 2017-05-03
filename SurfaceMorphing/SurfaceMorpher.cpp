@@ -4,6 +4,7 @@ static clock_t startTime = 0;
 static float duration = 2.0f;
 static float t = 0.0f;
 static int currentMeshIndex = 0;
+InterpolationMethod method = InterpolationMethod::Linear;
 
 vector<vec3> SurfaceMorpher::GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
@@ -115,6 +116,18 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	return intermediateVertices;
 }
 
+vector<vec3> SurfaceMorpher::GetInterpolation(Mesh * mesh1, Mesh * mesh2)
+{
+	if (method == InterpolationMethod::Linear)
+	{
+		return GetLinearInterpolation(mesh1, mesh2);
+	}
+	else
+	{
+		return GetTransformBasedInterpolation(mesh1, mesh2);
+	}
+}
+
 int SurfaceMorpher::GetCurrentIndex()
 {
 	return currentMeshIndex;
@@ -125,6 +138,11 @@ void SurfaceMorpher::PrepareNextInterpolation()
 	startTime = 0;
 	t = 0.0f;
 	currentMeshIndex++;
+}
+
+void SurfaceMorpher::SetInterpolationMethod(InterpolationMethod _method)
+{
+	method = _method;
 }
 
 float SurfaceMorpher::GetInterpolationProgress()

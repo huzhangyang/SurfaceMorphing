@@ -36,6 +36,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
 		SurfaceMorpher::SpeedReset();
 	}
+	if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+		SurfaceMorpher::SetInterpolationMethod(InterpolationMethod::Linear);
+	}
+	if (key == GLFW_KEY_2 && action == GLFW_PRESS) {
+		SurfaceMorpher::SetInterpolationMethod(InterpolationMethod::TransformBased);
+	}
 	// Draw Line
 	if (key == GLFW_KEY_Q && action == GLFW_PRESS) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

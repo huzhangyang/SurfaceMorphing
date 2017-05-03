@@ -35,7 +35,10 @@ int main()
 	for each (auto filename in parsedFilenames)
 	{
 		Mesh* mesh = MeshLoader::LoadObj2D(filename);
-		meshList.push_back(mesh);
+		if (mesh->GetVertices()->size() > 0)// a valid mesh
+		{
+			meshList.push_back(mesh);
+		}
 	}
 
 	// Load Shader
@@ -76,7 +79,7 @@ int main()
 			index++;
 			SurfaceMorpher::PrepareNextInterpolation();
 		}
-		auto vertices = SurfaceMorpher::GetLinearInterpolation(meshList[index], meshList[index + 1]);
+		auto vertices = SurfaceMorpher::GetInterpolation(meshList[index], meshList[index + 1]);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
