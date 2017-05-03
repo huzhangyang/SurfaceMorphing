@@ -42,6 +42,7 @@ private:
 class MeshLoader {
 public:
 	static Mesh* LoadObj2D(string filename);
+	static vector<string> ParseFilename(string input);
 private:
 	static vector<string> split(string& s, const char* delim);
 };

@@ -8,11 +8,14 @@
 int main()
 {
 	// Input Filename
-	cout << "Welcome to Surface Morphing. Please input the name of two obj files seperated with space('.obj' not needed):" << endl;
-	string filename1, filename2;
-	cin >> filename1 >> filename2;
-	filename1.append(".obj");
-	filename2.append(".obj");
+	cout << "Welcome to Surface Morphing. Please input the name of obj files('.obj' not needed):" << endl;
+	cout << "Pattern 1: '1,2,3,4' for '1.obj 2.obj 3.obj 4.obj'." << endl;
+	cout << "Pattern 2: '1:4' for '1.obj 2.obj 3.obj 4.obj' (number only)." << endl;
+	cout << "Usage: 1 : Linear Interpolation , 2 : Transform-based Interpolation. R : reset." << endl;
+	cout << "A: Speed Down, D: Speed Up, S: Speed Reset. Q: Line Mode. E: Fill Mode." << endl;
+	string filenames;
+	cin >> filenames;
+	auto parsedFilenames = MeshLoader::ParseFilename(filenames);
 
 	// Init GLFW
 	glfwInit();
@@ -28,8 +31,12 @@ int main()
 	glPointSize(8.0f);
 
 	// Load Mesh
-	Mesh* mesh1 = MeshLoader::LoadObj2D(filename1);
-	Mesh* mesh2 = MeshLoader::LoadObj2D(filename2);
+	vector<Mesh*> meshList;
+	for each (auto filename in parsedFilenames)
+	{
+		Mesh* mesh = MeshLoader::LoadObj2D(filename);
+		meshList.push_back(mesh);
+	}
 
 	// Load Shader
 	GLuint programID = ShaderLoader::LoadShader("vertex.shader", "fragment.shader");
@@ -63,7 +70,13 @@ int main()
 		glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &MVP[0][0]);
 
 		// Draw the mesh
-		auto vertices = SurfaceMorpher::GetLinearInterpolation(mesh1, mesh2);
+		int index = SurfaceMorpher::GetCurrentIndex();
+		if (SurfaceMorpher::GetInterpolationProgress() == 1 && index < meshList.size() - 2)
+		{//interpolate next mesh
+			index++;
+			SurfaceMorpher::PrepareNextInterpolation();
+		}
+		auto vertices = SurfaceMorpher::GetLinearInterpolation(meshList[index], meshList[index + 1]);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec3), &vertices[0], GL_DYNAMIC_DRAW);
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);

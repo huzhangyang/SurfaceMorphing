@@ -2,16 +2,11 @@
 
 static clock_t startTime = 0;
 static float duration = 2.0f;
+static float t = 0.0f;
+static int currentMeshIndex = 0;
 
 vector<vec3> SurfaceMorpher::GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
-	if (startTime == 0)
-		startTime = clock();
-
-	float time = (clock() - startTime) / (float)CLOCKS_PER_SEC;
-	time = std::min(duration, time);
-	float t = time / duration;
-
 	vector<vec3> vertices1 = mesh1->GetSequencedVertices()[0];
 	vector<vec3> vertices2 = mesh2->GetSequencedVertices()[0];
 	vector<vec3> intermediateVertices;
@@ -30,13 +25,6 @@ vector<vec3> SurfaceMorpher::GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2)
 
 vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
-	if (startTime == 0)
-		startTime = clock();
-
-	float time = (clock() - startTime) / (float)CLOCKS_PER_SEC;
-	time = std::min(duration, time);
-	float t = time / duration;
-
 	vector<vec3> vertices1 = mesh1->GetSequencedVertices()[0];
 	vector<vec3> vertices2 = mesh2->GetSequencedVertices()[0];
 	vector<vec3> intermediateVertices;
@@ -127,26 +115,48 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	return intermediateVertices;
 }
 
+int SurfaceMorpher::GetCurrentIndex()
+{
+	return currentMeshIndex;
+}
+
+void SurfaceMorpher::PrepareNextInterpolation()
+{
+	startTime = 0;
+	t = 0.0f;
+	currentMeshIndex++;
+}
+
+float SurfaceMorpher::GetInterpolationProgress()
+{
+	if (startTime == 0)
+		startTime = clock();
+
+	float time = (clock() - startTime) / (float)CLOCKS_PER_SEC;
+	time = std::min(duration, time);
+	t = time / duration;
+	return t;
+}
+
 void SurfaceMorpher::Reset()
 {
 	startTime = 0;
+	t = 0.0f;
+	currentMeshIndex = 0;
 }
 
 void SurfaceMorpher::SpeedUp()
 {
 	duration -= 0.5f;
 	duration = std::max(0.5f, duration);
-	Reset();
 }
 
 void SurfaceMorpher::SpeedDown()
 {
 	duration += 0.5f;
-	Reset();
 }
 
 void SurfaceMorpher::SpeedReset()
 {
 	duration = 2.0f;
-	Reset();
 }

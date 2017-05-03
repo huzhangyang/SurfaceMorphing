@@ -45,6 +45,31 @@ Mesh* MeshLoader::LoadObj2D(string filename)
 	return mesh;
 }
 
+vector<string> MeshLoader::ParseFilename(string input)
+{
+	vector<string> ret;
+	auto index = input.find(':');
+	if (index != string::npos)
+	{// pattern 2
+		int startindex = stoi(input.substr(0, index));
+		int endindex = stoi(input.substr(index + 1, input.size() - index));
+		for (int i = startindex; i <= endindex; i++)
+		{
+			ret.push_back(to_string(i).append(".obj"));
+		}
+	}
+	else
+	{// pattern 1
+		ret = split(input, ",");
+		for (int i = 0; i < ret.size(); i++)
+		{
+			ret[i].append(".obj");
+		}
+	}
+
+	return ret;
+}
+
 vector<string> MeshLoader::split(string& s, const char* delim)
 {
 	vector<string> ret;
