@@ -4,7 +4,7 @@ static clock_t startTime = 0;
 static float duration = 2.0f;
 static float t = 0.0f;
 static int currentMeshIndex = 0;
-InterpolationMethod method = InterpolationMethod::Linear;
+InterpolationMethod method = InterpolationMethod::TransformBased;
 
 vector<vec3> SurfaceMorpher::GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
@@ -70,25 +70,24 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 		MatrixXf R = U * V.transpose();
 		MatrixXf Symmetric = V * D * V.transpose();
 		Rt << (R(0, 0) - 1) * t + 1, R(0, 1) * t, R(1, 0) * t, (R(1, 1) - 1) * t + 1;
-		MatrixXf At = Rt * (I * (1 - t) + Symmetric * t);
+		MatrixXf At = Rt * ((1 - t) * I + t * Symmetric);
 
 		B(4 * i) = At(0, 0);
 		B(4 * i + 1) = At(0, 1);
 		B(4 * i + 2) = At(1, 0);
 		B(4 * i + 3) = At(1, 1);
 
-		for (int k = 0; k < 3; k++)
+		for (int j = 0; j < 3; j++)
 		{
-			A(4 * i, 2 * mesh1->vertexIndices[3 * i + k]) = PI(0, 2 * k);
-			A(4 * i, 2 * mesh1->vertexIndices[3 * i + k] + 1) = PI(0, 2 * k + 1);
-			A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + k]) = PI(1, 2 * k);
-			A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + k] + 1) = PI(1, 2 * k + 1);
-			A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + k]) = PI(3, 2 * k);
-			A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + k] + 1) = PI(3, 2 * k + 1);
-			A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + k]) = PI(4, 2 * k);
-			A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + k] + 1) = PI(4, 2 * k + 1);
+			A(4 * i, 2 * mesh1->vertexIndices[3 * i + j]) = PI(0, 2 * j);
+			A(4 * i, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(0, 2 * j + 1);
+			A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + j]) = PI(1, 2 * j);
+			A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(1, 2 * j + 1);
+			A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + j]) = PI(3, 2 * j);
+			A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(3, 2 * j + 1);
+			A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + j]) = PI(4, 2 * j);
+			A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(4, 2 * j + 1);
 		}
-
 	}
 
 	B(4 * faceCount) = vertices1[0].x * (1 - t) + vertices2[0].x * t;
@@ -97,7 +96,7 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	A(4 * faceCount, 0) = 1;
 	A(4 * faceCount + 1, 1) = 1;
 
-	auto newV = (A.transpose() * A).llt().solve(A.transpose() * B);
+	MatrixXf newV = (A.transpose() * A).llt().solve(A.transpose() * B);
 
 	vector<vec3> newVertices;
 	for (int i = 0; i< verticesCount; i++) 
@@ -116,16 +115,30 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	return intermediateVertices;
 }
 
+vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh * mesh1, Mesh * mesh2)
+{
+	vector<vec3> vertices1 = mesh1->GetSequencedVertices()[0];
+	vector<vec3> vertices2 = mesh2->GetSequencedVertices()[0];
+	vector<vec3> intermediateVertices;
+	//TODO
+	return intermediateVertices;
+}
+
 vector<vec3> SurfaceMorpher::GetInterpolation(Mesh * mesh1, Mesh * mesh2)
 {
 	if (method == InterpolationMethod::Linear)
 	{
 		return GetLinearInterpolation(mesh1, mesh2);
 	}
-	else
+	else if (method == InterpolationMethod::TransformBased)
 	{
 		return GetTransformBasedInterpolation(mesh1, mesh2);
 	}
+	else if (method == InterpolationMethod::SurfaceBased)
+	{
+		return GetSurfaceBasedInterpolation(mesh1, mesh2);
+	}
+	return vector<vec3>();
 }
 
 int SurfaceMorpher::GetCurrentIndex()

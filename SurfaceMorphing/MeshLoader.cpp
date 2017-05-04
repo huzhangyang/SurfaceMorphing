@@ -10,7 +10,6 @@ Mesh* MeshLoader::LoadObj2D(string filename)
 		{
 			string header;
 			file >> header;
-			//cout << "Read from file: " << header << endl;
 
 			if (header.compare("v") == 0)
 			{
@@ -36,11 +35,11 @@ Mesh* MeshLoader::LoadObj2D(string filename)
 		}
 
 		file.close();
-		cout << "File Read Complete." << endl;
+		//cout << "File " << filename << " Read Complete." << endl;
 	}
 	else
 	{
-		cout << "File Open Failed." << endl;
+		cout << "File " << filename << "Open Failed." << endl;
 	}
 	return mesh;
 }

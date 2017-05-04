@@ -7,7 +7,7 @@
 
 using namespace Eigen;
 
-enum InterpolationMethod { Linear = 1, TransformBased = 2 };
+enum InterpolationMethod { Linear = 1, TransformBased = 2 , SurfaceBased = 3};
 
 class SurfaceMorpher {
 public:
@@ -23,4 +23,5 @@ public:
 private:
 	static vector<vec3> GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2);
 	static vector<vec3> GetTransformBasedInterpolation(Mesh* mesh1, Mesh* mesh2);
+	static vector<vec3> GetSurfaceBasedInterpolation(Mesh* mesh1, Mesh* mesh2);
 };
