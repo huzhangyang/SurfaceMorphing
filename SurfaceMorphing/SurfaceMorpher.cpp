@@ -34,8 +34,8 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	size_t faceCount = vertices1.size() / 3;
 	size_t verticesCount = mesh1->GetVertices()[0].size();
 
-	MatrixXf A(4 * faceCount + 2, 2 * verticesCount), B(4 * faceCount + 2, 1);
-	MatrixXf P(6, 6), Q(6, 1), Affine(2, 2), Rt(2, 2), I(2, 2);
+	MatrixXf A(4 * faceCount, 2 * verticesCount - 2), B(4 * faceCount, 1), P(6, 6), Q(6, 1);
+	Matrix2f Affine, Rt, D, I;
 	I << 1, 0, 0, 1;
 
 	for (int i = 0; i < faceCount; i++)
@@ -60,49 +60,51 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 		MatrixXf PIQ = PI * Q;
 		Affine << PIQ(0, 0), PIQ(1, 0), PIQ(3, 0), PIQ(4, 0);
 
-		JacobiSVD<MatrixXf> svd(Affine, Eigen::ComputeThinU | Eigen::ComputeThinV);
+		for (int j = 0; j < 3; j++)
+		{
+			if (mesh1->vertexIndices[3 * i + j] > 0)
+			{
+				A(4 * i + 0, 2 * mesh1->vertexIndices[3 * i + j] - 2) = PI(0, 2 * j + 0);
+				A(4 * i + 0, 2 * mesh1->vertexIndices[3 * i + j] - 1) = PI(0, 2 * j + 1);
+				A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] - 2) = PI(1, 2 * j + 0);
+				A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] - 1) = PI(1, 2 * j + 1);
+				A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + j] - 2) = PI(3, 2 * j + 0);
+				A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + j] - 1) = PI(3, 2 * j + 1);
+				A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] - 2) = PI(4, 2 * j + 0);
+				A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] - 1) = PI(4, 2 * j + 1);
+			}
+		}
+
+		JacobiSVD<MatrixXf> svd(Affine, ComputeThinU | ComputeThinV);
 		auto U = svd.matrixU();
 		auto S = svd.singularValues();
 		auto V = svd.matrixV();
-		Matrix2f D;
+
 		D << S[0], 0, 0, S[1];
 
 		MatrixXf R = U * V.transpose();
 		MatrixXf Symmetric = V * D * V.transpose();
-		Rt << (R(0, 0) - 1) * t + 1, R(0, 1) * t, R(1, 0) * t, (R(1, 1) - 1) * t + 1;
+		Rt << (R(0, 0) - 1) * t + 1, R(0, 1) * t, R(1, 0) * t, (R(1, 1) - 1) * t + 1; // quaternion
 		MatrixXf At = Rt * ((1 - t) * I + t * Symmetric);
 
 		B(4 * i) = At(0, 0);
 		B(4 * i + 1) = At(0, 1);
 		B(4 * i + 2) = At(1, 0);
 		B(4 * i + 3) = At(1, 1);
-
-		for (int j = 0; j < 3; j++)
-		{
-			A(4 * i, 2 * mesh1->vertexIndices[3 * i + j]) = PI(0, 2 * j);
-			A(4 * i, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(0, 2 * j + 1);
-			A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + j]) = PI(1, 2 * j);
-			A(4 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(1, 2 * j + 1);
-			A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + j]) = PI(3, 2 * j);
-			A(4 * i + 2, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(3, 2 * j + 1);
-			A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + j]) = PI(4, 2 * j);
-			A(4 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 1) = PI(4, 2 * j + 1);
-		}
 	}
-
-	B(4 * faceCount) = vertices1[0].x * (1 - t) + vertices2[0].x * t;
-	B(4 * faceCount + 1) = vertices1[0].y * (1 - t) + vertices2[0].y * t;
-
-	A(4 * faceCount, 0) = 1;
-	A(4 * faceCount + 1, 1) = 1;
 
 	MatrixXf newV = (A.transpose() * A).llt().solve(A.transpose() * B);
 
 	vector<vec3> newVertices;
-	for (int i = 0; i< verticesCount; i++) 
+	float v0x = vertices1[0].x + (vertices2[0].x - vertices1[0].x) * t;
+	float v0y = vertices1[0].y + (vertices2[0].y - vertices1[0].y) * t;
+	newVertices.push_back(vec3(v0x, v0y, 0));
+	for (int i = 1; i< verticesCount; i++) 
 	{
-		vec3 vertex(newV(2 * i, 0), newV(2 * i + 1, 0), 0);
+		vec3 vertex(newV(2 * i - 2), newV(2 * i -1), 0);
 		newVertices.push_back(vertex);
+		//cout << "ori:" << vertices1[i].x << "," << vertices1[i].y << endl;
+		//cout << "new:" << vertex.x << "," << vertex.y << endl;
 	}
 
 	for (unsigned int i = 0; i< mesh1->vertexIndices.size(); i++)
@@ -120,7 +122,47 @@ vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh * mesh1, Mesh * m
 	vector<vec3> vertices1 = mesh1->GetSequencedVertices()[0];
 	vector<vec3> vertices2 = mesh2->GetSequencedVertices()[0];
 	vector<vec3> intermediateVertices;
-	//TODO
+
+	//algorithm
+	size_t faceCount = vertices1.size() / 3;
+	size_t verticesCount = mesh1->GetVertices()[0].size();
+	
+	MatrixXf A(4 * faceCount, 2 * verticesCount - 2), B(4 * faceCount, 1), V(2, 2), U(2, 2);
+	Matrix2f Rt, D, I;
+
+	for (int i = 0; i < faceCount; i++)
+	{
+		vec3 v1 = vertices1[3 * i];
+		vec3 v2 = vertices1[3 * i + 1];
+		vec3 v3 = vertices1[3 * i + 2];
+		vec3 u1 = vertices2[3 * i];
+		vec3 u2 = vertices2[3 * i + 1];
+		vec3 u3 = vertices2[3 * i + 2];
+		vec3 v4 = (v1 + v2 + v3) / 3.0f + (v2 - v1) * (v3 - v2) / sqrt(abs(v2 - v1) * abs(v3 - v2));
+		V << v1.x - v3.x, v2.x - v3.x, v1.y - v3.y, v2.y - v3.y;
+		U << u1.x - u3.x, u2.x - u3.x, u1.y - u3.y, u2.y - u3.y;
+
+		MatrixXf M = V * U.inverse();
+		Vector2f T = Vector2f(v1.x, v1.y) - M * Vector2f(u1.x, u1.y);
+
+		JacobiSVD<MatrixXf> svd(M, ComputeThinU | ComputeThinV);
+		auto U = svd.matrixU();
+		auto S = svd.singularValues();
+		auto V = svd.matrixV();
+
+		D << S[0], 0, 0, S[1];
+		MatrixXf R = U * V.transpose();
+		MatrixXf Symmetric = V * D * V.transpose();
+
+		Rt << (R(0, 0) - 1) * t + 1, R(0, 1) * t, R(1, 0) * t, (R(1, 1) - 1) * t + 1; // quaternion
+		MatrixXf At = Rt * ((1 - t) * I + t * Symmetric);
+
+		B(4 * i) = At(0, 0);
+		B(4 * i + 1) = At(0, 1);
+		B(4 * i + 2) = At(1, 0);
+		B(4 * i + 3) = At(1, 1);
+
+	}
 	return intermediateVertices;
 }
 
