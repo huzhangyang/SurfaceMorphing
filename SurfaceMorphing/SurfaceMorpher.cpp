@@ -36,7 +36,7 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	float v0x = mesh1->GetVertices()[0][0].x + (mesh2->GetVertices()[0][0].x - mesh1->GetVertices()[0][0].x) * t;
 	float v0y = mesh1->GetVertices()[0][0].y + (mesh2->GetVertices()[0][0].y - mesh1->GetVertices()[0][0].y) * t;
 
-	MatrixXf A(4 * faceCount, 2 * verticesCount - 2), B(4 * faceCount, 1), P(6, 6), Q(6, 1);
+	MatrixXf A = MatrixXf::Zero(4 * faceCount, 2 * verticesCount - 2), B = MatrixXf::Zero(4 * faceCount, 1), P(6, 6), Q(6, 1);
 	Matrix2f Affine, Rt, D, I;
 	I << 1, 0, 0, 1;
 
@@ -105,10 +105,10 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 		{
 			if (mesh1->vertexIndices[3 * i + j] == 0)//fix first vertex
 			{
-				B(4 * i + 0) -= PI(0, 2 * j) * v0x + PI(0, 2*j + 1) * v0y;
+				B(4 * i + 0) -= PI(0, 2 * j) * v0x + PI(0, 2 * j + 1) * v0y;
 				B(4 * i + 1) -= PI(1, 2 * j) * v0x + PI(1, 2 * j + 1) * v0y;
-				B(4 * i + 2) -= PI(2, 2 * j) * v0x + PI(2, 2 * j + 1) * v0y;
-				B(4 * i + 3) -= PI(3, 2 * j) * v0x + PI(3, 2 * j + 1) * v0y;
+				B(4 * i + 2) -= PI(3, 2 * j) * v0x + PI(3, 2 * j + 1) * v0y;
+				B(4 * i + 3) -= PI(4, 2 * j) * v0x + PI(4, 2 * j + 1) * v0y;
 			}
 		}
 	}
