@@ -226,22 +226,22 @@ vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh* mesh1, Mesh* mes
 			A(6 * i + 0, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(0, 2 * j + 1);
 			A(6 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(1, 2 * j + 0);
 			A(6 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(1, 2 * j + 1);
-			A(6 * i + 2, 2 * (verticesCount + i) + 0) = area * PI(2, 2 * j + 0);
-			A(6 * i + 2, 2 * (verticesCount + i) + 1) = area * PI(2, 2 * j + 1);
-			A(6 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(3, 2 * j + 0);
-			A(6 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(3, 2 * j + 1);
-			A(6 * i + 4, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(4, 2 * j + 0);
-			A(6 * i + 4, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(4, 2 * j + 1);
+			A(6 * i + 2, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(3, 2 * j + 0);
+			A(6 * i + 2, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(3, 2 * j + 1);
+			A(6 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(4, 2 * j + 0);
+			A(6 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(4, 2 * j + 1);
+			A(6 * i + 4, 2 * (verticesCount + i) + 0) = area * PI(2, 2 * j + 0);
+			A(6 * i + 4, 2 * (verticesCount + i) + 1) = area * PI(2, 2 * j + 1);
 			A(6 * i + 5, 2 * verticesCount + 2 * i + 0) = area * PI(5, 2 * j + 0);
 			A(6 * i + 5, 2 * verticesCount + 2 * i + 1) = area * PI(5, 2 * j + 1);
 		}
 
 		B(6 * i + 0) = area * At(0, 0);
 		B(6 * i + 1) = area * At(0, 1);
-		B(6 * i + 2) = area * T(0) * t * alpha;
-		B(6 * i + 3) = area * At(1, 0);
-		B(6 * i + 4) = area * At(1, 1);
-		B(6 * i + 5) = area * T(1) * t * alpha;
+		B(6 * i + 2) = area * At(1, 0);
+		B(6 * i + 3) = area * At(1, 1);
+		B(6 * i + 4) = area * T(0) * t;
+		B(6 * i + 5) = area * T(1) * t;
 	}
 
 	//MatrixXf newVx = (K.transpose() * K).llt().solve(K.transpose() * Bx);
