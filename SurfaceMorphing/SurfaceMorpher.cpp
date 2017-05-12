@@ -4,7 +4,7 @@ static clock_t startTime = 0;
 static float duration = 2.0f;
 static float t = 0.0f;
 static int currentMeshIndex = 0;
-InterpolationMethod method = InterpolationMethod::TransformBased;
+InterpolationMethod method = InterpolationMethod::SurfaceBased;
 
 vector<vec3> SurfaceMorpher::GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
@@ -136,7 +136,7 @@ vector<vec3> SurfaceMorpher::GetTransformBasedInterpolation(Mesh* mesh1, Mesh* m
 	return intermediateVertices;
 }
 
-vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh * mesh1, Mesh * mesh2)
+vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
 	vector<vec3> vertices1 = mesh1->GetSequencedVertices()[0];
 	vector<vec3> vertices2 = mesh2->GetSequencedVertices()[0];
@@ -145,10 +145,11 @@ vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh * mesh1, Mesh * m
 	//algorithm
 	size_t faceCount = vertices1.size() / 3;
 	size_t verticesCount = mesh1->GetVertices()[0].size();
-	float alpha = 1 / (float)sqrt(SCREEN_WIDTH * SCREEN_WIDTH + SCREEN_HEIGHT * SCREEN_HEIGHT);
+	float alpha = 1.0f / (SCREEN_WIDTH * SCREEN_WIDTH + SCREEN_HEIGHT * SCREEN_HEIGHT);
 
-	MatrixXf K = MatrixXf::Zero(faceCount * 4, faceCount + verticesCount);
-	MatrixXf Bx = MatrixXf::Zero(faceCount * 4, 1), By = MatrixXf::Zero(faceCount * 4, 1);
+	MatrixXf K = MatrixXf::Zero(faceCount * 3, faceCount + verticesCount);
+	MatrixXf Bx = MatrixXf::Zero(faceCount * 3, 1), By = MatrixXf::Zero(faceCount * 3, 1);
+	MatrixXf A = MatrixXf::Zero(6 * faceCount, 2 * verticesCount + 2 * faceCount), B = MatrixXf::Zero(6 * faceCount, 1);
 	Matrix2f U, V, Rt, D, I;
 	I << 1, 0, 0, 1;
 
@@ -160,7 +161,7 @@ vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh * mesh1, Mesh * m
 		vec3 u1 = vertices2[3 * i];
 		vec3 u2 = vertices2[3 * i + 1];
 		vec3 u3 = vertices2[3 * i + 2];
-		//vec3 v4 = (v1 + v2 + v3) / 3.0f + (v2 - v1) * (v3 - v2) / sqrt(abs(v2 - v1) * abs(v3 - v2)); // no use of v4 in 2D
+		//vec3 v4 = (v1 + v2 + v3) / 3.0f + (v2 - v1) * (v3 - v2) / sqrt(abs(v2 - v1) * abs(v3 - v2));
 		V << v1.x - v3.x, v2.x - v3.x, v1.y - v3.y, v2.y - v3.y;
 		U << u1.x - u3.x, u2.x - u3.x, u1.y - u3.y, u2.y - u3.y;
 
@@ -168,58 +169,89 @@ vector<vec3> SurfaceMorpher::GetSurfaceBasedInterpolation(Mesh * mesh1, Mesh * m
 		Vector2f T = Vector2f(v1.x, v1.y) - M * Vector2f(u1.x, u1.y);
 
 		JacobiSVD<MatrixXf> svd(M, ComputeThinU | ComputeThinV);
-		auto U = svd.matrixU();
-		auto S = svd.singularValues();
-		auto V = svd.matrixV();
+		auto svdU = svd.matrixU();
+		auto svdS = svd.singularValues();
+		auto svdV = svd.matrixV();
 
-		D << S[0], 0, 0, S[1];
-		MatrixXf R = U * V.transpose();
-		MatrixXf Symmetric = V * D * V.transpose();
+		D << svdS[0], 0, 0, svdS[1];
+		MatrixXf R = svdU * svdV.transpose();
+		MatrixXf S = svdV * D * svdV.transpose();
 
 		Matrix3f R33;
 		R33 << R(0, 0), R(0, 1), 0, R(1, 0), R(1, 1), 0, 0, 0, 1;
 		Quaternionf q(R33);
 		Quaternionf q0(1.0f, 0.0f, 0.0f, 0.0f);
 		Rt = q0.slerp(t, q).toRotationMatrix().block(0, 0, 2, 2); // quaternion interpolation
-		MatrixXf At = Rt * ((1 - t) * I + t * Symmetric);
+		MatrixXf At = Rt * ((1 - t) * I + t * S);
 
-		vec3 cp = (v2 - v1) * (v3 - v1);
+		vec3 cp = (u2 - u1) * (u3 - u1);
 		float area = 0.5f * sqrt(cp.x * cp.x + cp.y * cp.y);
 
-		Matrix3f KX;
-		KX << v1.x, v1.y, 0, 1,
-			v2.x, v2.y, 0, 1,
-			v3.x, v3.y, 0, 1,
-			0, 0, 0, 1;
-		MatrixXf KXI = KX.inverse();
-
 		//Fill Matrix
+		/*
+
+		Matrix3f P33;
+		P33 << u1.x, u1.y, 1,
+		u2.x, u2.y, 1,
+		u3.x, u3.y, 1;
+		MatrixXf PI = P33.inverse();
 
 		for (int j = 0; j < 3; j++) 
 		{
-			K(4 * i + j, mesh1->vertexIndices[3 * i + 0]) = area * KXI(j, 0);
-			K(4 * i + j, mesh1->vertexIndices[3 * i + 1]) = area * KXI(j, 1);
-			K(4 * i + j, mesh1->vertexIndices[3 * i + 2]) = 0;
-			K(4 * i + j, verticesCount + i) = area * KXI(j, 3);
+			K(3 * i + j, mesh1->vertexIndices[3 * i + 0]) = area * PI(j, 0);
+			K(3 * i + j, mesh1->vertexIndices[3 * i + 1]) = area * PI(j, 1);
+			K(3 * i + j, verticesCount + i) = area * PI(j, 2);
 		}
 
-		Bx(4 * i + 0) = area * At(0, 0);
-		By(4 * i + 0) = area * At(1, 0);
-		Bx(4 * i + 1) = area * At(0, 1);
-		By(4 * i + 1) = area * At(1, 1);
-		Bx(4 * i + 2) = 0;
-		By(4 * i + 2) = 0;
-		Bx(4 * i + 3) = area * T(0) * t;
-		By(4 * i + 3) = area * T(1) * t;
+		Bx(3 * i + 0) = area * At(0, 0);
+		By(3 * i + 0) = area * At(0, 1);
+		Bx(3 * i + 1) = area * At(1, 0);
+		By(3 * i + 1) = area * At(1, 1);
+		Bx(3 * i + 2) = area * T(0) * t * alpha;
+		By(3 * i + 2) = area * T(1) * t * alpha;*/
+
+		//////////
+		MatrixXf P(6, 6);
+		P << u1.x, u1.y, 1, 0, 0, 0,
+			0, 0, 0, u1.x, u1.y, 1,
+			u2.x, u2.y, 1, 0, 0, 0,
+			0, 0, 0, u2.x, u2.y, 1,
+			u3.x, u3.y, 1, 0, 0, 0,
+			0, 0, 0, u3.x, u3.y, 1;
+		MatrixXf PI = P.inverse();
+
+		for (int j = 0; j < 3; j++)
+		{
+			A(6 * i + 0, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(0, 2 * j + 0);
+			A(6 * i + 0, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(0, 2 * j + 1);
+			A(6 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(1, 2 * j + 0);
+			A(6 * i + 1, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(1, 2 * j + 1);
+			A(6 * i + 2, 2 * (verticesCount + i) + 0) = area * PI(2, 2 * j + 0);
+			A(6 * i + 2, 2 * (verticesCount + i) + 1) = area * PI(2, 2 * j + 1);
+			A(6 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(3, 2 * j + 0);
+			A(6 * i + 3, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(3, 2 * j + 1);
+			A(6 * i + 4, 2 * mesh1->vertexIndices[3 * i + j] + 0) = area * PI(4, 2 * j + 0);
+			A(6 * i + 4, 2 * mesh1->vertexIndices[3 * i + j] + 1) = area * PI(4, 2 * j + 1);
+			A(6 * i + 5, 2 * verticesCount + 2 * i + 0) = area * PI(5, 2 * j + 0);
+			A(6 * i + 5, 2 * verticesCount + 2 * i + 1) = area * PI(5, 2 * j + 1);
+		}
+
+		B(6 * i + 0) = area * At(0, 0);
+		B(6 * i + 1) = area * At(0, 1);
+		B(6 * i + 2) = area * T(0) * t * alpha;
+		B(6 * i + 3) = area * At(1, 0);
+		B(6 * i + 4) = area * At(1, 1);
+		B(6 * i + 5) = area * T(1) * t * alpha;
 	}
 
-	MatrixXf newVx = (K.transpose() * K).llt().solve(K.transpose() * Bx);
-	MatrixXf newVy = (K.transpose() * K).llt().solve(K.transpose() * By);
+	//MatrixXf newVx = (K.transpose() * K).llt().solve(K.transpose() * Bx);
+	//MatrixXf newVy = (K.transpose() * K).llt().solve(K.transpose() * By);
+	MatrixXf newV = (A.transpose() * A).llt().solve(A.transpose() * B);
 
 	vector<vec3> newVertices;
 	for (int i = 0; i < verticesCount; i++)
 	{
-		vec3 vertex(newVx(i), newVy(i), 0);
+		vec3 vertex(newV(2 * i), newV(2 * i + 1), 0);
 		newVertices.push_back(vertex);
 		//cout << "ori:" << vertices1[i].x << "," << vertices1[i].y << endl;
 		//cout << "new:" << vertex.x << "," << vertex.y << endl;

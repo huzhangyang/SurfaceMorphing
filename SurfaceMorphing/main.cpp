@@ -20,7 +20,7 @@ int main()
 	// Init GLFW
 	glfwInit();
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Mesh Deformation", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Mesh Interpolation", NULL, NULL);
 	glfwMakeContextCurrent(window);
 	InputController::InitCallback(window);
 
