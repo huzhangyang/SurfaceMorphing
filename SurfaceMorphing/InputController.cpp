@@ -27,6 +27,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		verticalAngle = 0;
 		SurfaceMorpher::Reset();
 	}
+	if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+		SurfaceMorpher::TogglePause();
+	}
 	if (key == GLFW_KEY_A && action == GLFW_PRESS) {
 		SurfaceMorpher::SpeedDown();
 	}

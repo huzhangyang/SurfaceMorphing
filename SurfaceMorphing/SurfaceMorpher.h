@@ -17,6 +17,7 @@ public:
 	static void PrepareNextInterpolation();
 	static void SetInterpolationMethod(InterpolationMethod _method);
 	static void Reset();
+	static void TogglePause();
 	static void SpeedUp();
 	static void SpeedDown();
 	static void SpeedReset();

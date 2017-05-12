@@ -12,7 +12,7 @@ int main()
 	cout << "Pattern 1: '1,2,3,4' for '1.obj 2.obj 3.obj 4.obj'." << endl;
 	cout << "Pattern 2: '1:4' for '1.obj 2.obj 3.obj 4.obj' (number only)." << endl;
 	cout << "Usage: 1 : Linear Interpolation , 2 : Transform-based Interpolation. 3 : Surface-based Interpolation. " << endl;
-	cout << "A: Speed Down, D: Speed Up, S: Speed Reset. Q: Line Mode. E: Fill Mode. R : Reset." << endl;
+	cout << "A: Speed Down, D: Speed Up, S: Speed Reset. Q: Line Mode. E: Fill Mode. R : Reset. W : Pause." << endl;
 	string filenames;
 	cin >> filenames;
 	auto parsedFilenames = MeshLoader::ParseFilename(filenames);

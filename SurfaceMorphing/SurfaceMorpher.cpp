@@ -4,7 +4,8 @@ static clock_t startTime = 0;
 static float duration = 2.0f;
 static float t = 0.0f;
 static int currentMeshIndex = 0;
-InterpolationMethod method = InterpolationMethod::SurfaceBased;
+static bool isPaused = false;
+InterpolationMethod method = InterpolationMethod::Linear;
 
 vector<vec3> SurfaceMorpher::GetLinearInterpolation(Mesh* mesh1, Mesh* mesh2)
 {
@@ -307,7 +308,8 @@ float SurfaceMorpher::GetInterpolationProgress()
 
 	float time = (clock() - startTime) / (float)CLOCKS_PER_SEC;
 	time = std::min(duration, time);
-	t = time / duration;
+	if(!isPaused)
+		t = time / duration;
 	return t;
 }
 
@@ -316,6 +318,11 @@ void SurfaceMorpher::Reset()
 	startTime = 0;
 	t = 0.0f;
 	currentMeshIndex = 0;
+}
+
+void SurfaceMorpher::TogglePause()
+{
+	isPaused = !isPaused;
 }
 
 void SurfaceMorpher::SpeedUp()
